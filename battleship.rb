@@ -89,6 +89,7 @@ end
 class Grid
   def initialize
     @ships = []
+    @hits = []
   end
 
   def has_ship_on?(x, y)
@@ -98,50 +99,53 @@ class Grid
     false
   end
 
+  def place_ship(ship, x, y, across)
+    ship.place(x, y, across)
+
+    unless @ships.any?{|s| s.overlaps_with?(ship)}
+      @ships << ship
+    else
+      false
+    end
+  end
+
   def display
-    left_col = [ "A |", "B |", "C |", "D |", "E |", "F |", "G |", "H |", "I |", "J |" ]
+    e_coord = "   |"
+    o_coord = " O |"
+
+    left_col = ["A |", "B |", "C |", "D |", "E |", "F |", "G |", "H |", "I |", "J |"]
     puts "    1   2   3   4   5   6   7   8   9   10"
     print "  -----------------------------------------"
     10.times do |a|
       print "\n"
       print left_col[a]
       10.times do |b|
-        print "   |"
+        if has_ship_on?(b+1, a+1)
+          print o_coord
+        else
+          print e_coord
+        end
       end
     end
     puts "\n  -----------------------------------------"
   end
 
-  def empty_grid
-    %Q{    1   2   3   4   5   6   7   8   9   10
-  -----------------------------------------
-A |   |   |   |   |   |   |   |   |   |   |
-B |   |   |   |   |   |   |   |   |   |   |
-C |   |   |   |   |   |   |   |   |   |   |
-D |   |   |   |   |   |   |   |   |   |   |
-E |   |   |   |   |   |   |   |   |   |   |
-F |   |   |   |   |   |   |   |   |   |   |
-G |   |   |   |   |   |   |   |   |   |   |
-H |   |   |   |   |   |   |   |   |   |   |
-I |   |   |   |   |   |   |   |   |   |   |
-J |   |   |   |   |   |   |   |   |   |   |
-  -----------------------------------------
-}
-  end
-
-  def place_ship(ship, x, y, across)
-    ship.place(x, y, across)
-    @ships << ship
+  def fire_at(x, y)
+    if has_ship_on?(x, y) && !@hits.include?([x, y])
+      @hits << [x, y]
+    end
   end
 end
 
 
 # CHECKING THE BREAKDOWN OF OBJECTS WITHIN EACH SHIP
 # i = 0
-# battleship = Ship.new(4)
-# battleship.place(2, 1, true)
+battleship = Ship.new(4)
+battleship.place(2, 1, true)
 # puts battleship.positions[0].x
 #
 # puts "#{battleship.positions[1].x}, #{battleship.positions[1].y}"
 # puts battleship.positions[2]
 # puts battleship.positions
+puts battleship.positions[0].x
+puts battleship.positions[0].y
