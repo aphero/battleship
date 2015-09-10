@@ -156,8 +156,19 @@ class Grid
   end
 
   def sunk?
-    return
+    return false if @ships == []
+    @ships.all?{|ship| ship.sunk?}
   end
+
+  def x_of(input)
+    input.slice(1..input.length).to_i
+  end
+
+  def y_of(input)
+    letter = input.slice(0)
+    letter.ord-"A".ord+1
+  end
+  
 end
 
 
