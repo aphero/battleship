@@ -25,11 +25,20 @@ class Position
   def initialize(x, y)
     @x = x
     @y = y
-    @hit = 0
+    @hit = false
   end
 
-  def is_hit
+  def hit?
     @hit
+  end
+
+  # if @hit is true, return false so that the program knows that we have already hit this location.  Otherwise set @hit to true.
+  def hit!
+    if @hit
+      return false
+    else
+      @hit = true
+    end
   end
 end
 
@@ -39,7 +48,6 @@ class Ship
   def initialize(length)
     @length = length
     @positions = []
-    @hits = []
   end
 
   def place(x, y, across)
@@ -60,7 +68,7 @@ class Ship
   end
 
   def covers?(x, y)
-    # For each object in the positions array, check to see if the x and y objects equal the current coordinate being passed in.
+    # For each Position object in the positions array, check to see if the x and y objects equal any positions listed there.
     @positions.each do |place|
       return place if place.x == x && place.y == y
     end
@@ -69,24 +77,31 @@ class Ship
 
   def overlaps_with?(other_ship)
     # Check positions and return true if any of other_ship's coordinates are already inside positions.
-    @positions.any? {|place| other_ship.covers?(place.x, place.y)}
+    @positions.any? {|p| other_ship.covers?(p.x, p.y)}
   end
 
   def fire_at(x, y)
-    if covers?(x, y) && !@hits.include?([x, y])
-      @hits << [x, y]
-    end
+    # Check to see if x and y are covered in any existing Position objects and whether hits has a record of a hit.
+    # Set hit on Position object if one is not already recorded.
+    position = covers?(x, y)
+    position && position.hit!
+  end
+
+  def hit_on?(x, y)
+    # Check to see if x and y are covered in any existing Position objects and if there is a hit recorded.
+    position = covers?(x, y)
+    position && position.hit?
   end
 
   def sunk?
-    if @hits.length >= @length
-      return true
-    end
-    false
+    # Sink ship if hits are greater than or equal to the length of the ship.
+    !@positions.empty? && @positions.all? {|p| p.hit?}
   end
 end
 
 class Grid
+  attr_reader :ships, :hits
+
   def initialize
     @ships = []
     @hits = []
@@ -94,15 +109,14 @@ class Grid
 
   def has_ship_on?(x, y)
     @ships.each do |ship|
-      return true if ship.covers?(x, y)
+      return ship if ship.covers?(x, y)
     end
     false
   end
 
   def place_ship(ship, x, y, across)
     ship.place(x, y, across)
-
-    unless @ships.any?{|s| s.overlaps_with?(ship)}
+    unless @ships.any?{|s| ship.overlaps_with?(s)}
       @ships << ship
     else
       false
@@ -110,8 +124,11 @@ class Grid
   end
 
   def fire_at(x, y)
-    if has_ship_on?(x, y) && !@hits.include?([x, y])
-      @hits << [x, y]
+    ship = has_ship_on?(x, y)
+    if ship
+      ship.fire_at(x, y)
+    else
+      false
     end
   end
 
@@ -126,7 +143,7 @@ class Grid
       print "\n"
       print left_col[a]
       10.times do |b|
-        if has_ship_on?(b+1, a+1) && @hits.include?([b+1, a+1])
+        if has_ship_on?(b+1, a+1) && @ships.any?{ |s| s.hit_on?(b+1, a+1) }
           print h_coord
         elsif has_ship_on?(b+1, a+1)
           print o_coord
@@ -139,19 +156,19 @@ class Grid
   end
 
   def sunk?
-    true unless @hits.length <= 100
+    return
   end
 end
 
 
 # CHECKING THE BREAKDOWN OF OBJECTS WITHIN EACH SHIP
 # i = 0
-battleship = Ship.new(4)
-battleship.place(2, 1, true)
+# battleship = Ship.new(4)
+# battleship.place(2, 1, true)
+# # puts battleship.positions[0].x
+# #
+# # puts "#{battleship.positions[1].x}, #{battleship.positions[1].y}"
+# # puts battleship.positions[2]
+# # puts battleship.positions
 # puts battleship.positions[0].x
-#
-# puts "#{battleship.positions[1].x}, #{battleship.positions[1].y}"
-# puts battleship.positions[2]
-# puts battleship.positions
-puts battleship.positions[0].x
-puts battleship.positions[0].y
+# puts battleship.positions[0].y
